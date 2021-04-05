@@ -1,10 +1,13 @@
 import "./App.css";
 import { useState } from "react";
 import Axios from "axios";
+import { useFormik } from "formik";
+import * as yup from "yup";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
   var moment = require("moment"); // require
+  var moment2 = require("moment-timezone");
 
   const [customerSurname, setCustomerSurname] = useState("");
   const [customerMobileNumber, setCustomerMobileNumber] = useState("");
@@ -29,12 +32,55 @@ function App() {
   const [dateOne, setDateOne] = useState(Date());
   const [dateTwo, setDateTwo] = useState(Date());
 
-  console.log(timePeriod);
+
+  //setting the initial values
+  const initialValues = {
+    customerSurname: "",
+    customerMobileNumber: "",
+    partySize: "",
+    dateOfBooking: "",
+  };
+
+  //creating the validation schema
+  const validationSchema = yup.object().shape({
+    customerSurname: yup
+      .string()
+      .required("Surname is a required field")
+      .min(3, "Surname must be at least 3 characters")
+      .max(20, "Name must be no more than  characters"),
+    customerMobileNumber: yup
+      .number()
+      .required("Please enter the contact numner")
+      .min(11, "A mobile number needs to be 11 numbers")
+      .max(11, "A mobile number needs to be 11 numbers"),
+    partySize: yup
+      .number()
+      .required("Please enter the size of party ")
+      .min(1, "One person is the minimum for a booking")
+      .max(4, "A table only holds four people"),
+    dateOfBooking: yup
+      .date()
+      .required("A booking date is required for a booking"),
+  });
+
+  function Form({ onSubmit }) {
+  //using useFormik 
+  const formik = useFormik({
+    initialValues,
+    validationSchema,
+    onSubmit
+  });
+
+
+
 
   const callList = timePeriod.map((name) => {
     return (
-      <ul key={name.dateOfBooking}>
-        Date of Booking : {name.dateOfBooking} | {name.bookingPartySize}
+      <ul key={"sum(bookingPartySize)"}>
+        Date of Booking :{" "}
+        {moment(name.dateOfBooking).tz("Europe/London").format("LL")}
+        &nbsp;&nbsp; | &nbsp;&nbsp;Total Customers:&nbsp;&nbsp;&nbsp;
+        {name["sum(bookingPartySize)"]}
       </ul>
     );
   });
@@ -42,9 +88,13 @@ function App() {
   const callList2 = collectedNumber2.map((name) => {
     return (
       <ul key={name.tableNumber}>
-        <li>Date of Booking : {name.dateOfBooking}</li>
-        <li>{name.customerSurname} | </li>
-        {name.tableNumber}
+        <li>
+          Date of Booking :{" "}
+          {moment(name.dateOfBooking).tz("Europe/London").format("LL")} &nbsp;
+          Surname : &nbsp;{name.customerSurname} &nbsp; Contact Number &nbsp;
+          {name.customerMobileNumber} &nbsp; TableNumber &nbsp;
+          {name.tableNumber}
+        </li>
       </ul>
     );
   });
@@ -58,7 +108,23 @@ function App() {
       dateOfBooking: dateOfBooking,
     }).then((response) => {
       setNewMessage(response.data);
-      alert(response.data);
+
+      if (response.data === "No more tables available")
+        alert("No more tables available");
+      else if (response.data === "Your booking has been completed") {
+        alert(
+          response.data +
+            "\n" +
+            "Surname : " +
+            customerSurname +
+            "\n" +
+            "PartySize : " +
+            bookingPartySize +
+            "\n" +
+            "Date : " +
+            dateOfBooking
+        );
+      }
     });
   };
   //GET ALL THE BOOKINGS MADE
@@ -135,6 +201,7 @@ function App() {
       let totalBookings = 0;
       return (
         <ul>
+          totalBookings += name.bookingPartySize
           {timePeriod.map((item) => {
             return <li>{item.idbookings} </li>;
           })}
@@ -174,6 +241,9 @@ function App() {
 
           <input
             type="text"
+            name="customerSurname"
+            id="customerSurname"
+            placeholder="Surname"
             onChange={(event) => {
               setCustomerSurname(event.target.value);
             }}
@@ -181,6 +251,9 @@ function App() {
           <label>Customer Contact Number:</label>
           <input
             type="text"
+            name="customerMobileNumber"
+            id="customerMobileNumber"
+            placeholder="Mobile Number"
             onChange={(event) => {
               setCustomerMobileNumber(event.target.value);
             }}
@@ -188,6 +261,9 @@ function App() {
           <label>Party Size:</label>
           <input
             type="number"
+            name="partySize"
+            id="partySize"
+            placeholder="Size of party"
             min="1"
             max="4"
             onChange={(event) => {
@@ -197,6 +273,8 @@ function App() {
           <label>Date of Booking:</label>
           <input
             type="date"
+            name="dateOfBooking"
+            id="dateOfBooking"
             onChange={(event) => {
               setDateOfBooking(event.target.value);
             }}
@@ -280,7 +358,6 @@ function App() {
         <button
           className="cta"
           onClick={() => {
-            // creatBooking();
             getBookings();
           }}
         >

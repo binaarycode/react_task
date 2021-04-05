@@ -171,8 +171,8 @@ app.get('/periodCustomerTotal/periodStart=:dateOne&periodEnd=:dateTwo', (req,res
 })
 
 
-//GET A BOOKING LIST FOR A SPECIFIED DAY
-//INCLUDE TABLE LIST AND BOOKINGS
+  //GET A BOOKING LIST FOR A SPECIFIED DAY
+  //INCLUDE TABLE LIST AND BOOKINGS
   //IF TABLE IS BOOKED GET CUSTOMER SURNAME + NUMBER
   //IF NULL A NULL VALUE CAN BE RETURNED
   app.get("/dailyInformation/find=:dateOfQuestion2", (req,res) =>{

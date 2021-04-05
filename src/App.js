@@ -1,8 +1,6 @@
 import "./App.css";
 import { useState } from "react";
 import Axios from "axios";
-import { useFormik } from "formik";
-import * as yup from "yup";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
@@ -32,48 +30,6 @@ function App() {
   const [dateOne, setDateOne] = useState(Date());
   const [dateTwo, setDateTwo] = useState(Date());
 
-
-  //setting the initial values
-  const initialValues = {
-    customerSurname: "",
-    customerMobileNumber: "",
-    partySize: "",
-    dateOfBooking: "",
-  };
-
-  //creating the validation schema
-  const validationSchema = yup.object().shape({
-    customerSurname: yup
-      .string()
-      .required("Surname is a required field")
-      .min(3, "Surname must be at least 3 characters")
-      .max(20, "Name must be no more than  characters"),
-    customerMobileNumber: yup
-      .number()
-      .required("Please enter the contact numner")
-      .min(11, "A mobile number needs to be 11 numbers")
-      .max(11, "A mobile number needs to be 11 numbers"),
-    partySize: yup
-      .number()
-      .required("Please enter the size of party ")
-      .min(1, "One person is the minimum for a booking")
-      .max(4, "A table only holds four people"),
-    dateOfBooking: yup
-      .date()
-      .required("A booking date is required for a booking"),
-  });
-
-  function Form({ onSubmit }) {
-  //using useFormik 
-  const formik = useFormik({
-    initialValues,
-    validationSchema,
-    onSubmit
-  });
-
-
-
-
   const callList = timePeriod.map((name) => {
     return (
       <ul key={"sum(bookingPartySize)"}>
@@ -86,17 +42,20 @@ function App() {
   });
 
   const callList2 = collectedNumber2.map((name) => {
-    return (
-      <ul key={name.tableNumber}>
-        <li>
-          Date of Booking :{" "}
-          {moment(name.dateOfBooking).tz("Europe/London").format("LL")} &nbsp;
-          Surname : &nbsp;{name.customerSurname} &nbsp; Contact Number &nbsp;
-          {name.customerMobileNumber} &nbsp; TableNumber &nbsp;
-          {name.tableNumber}
-        </li>
-      </ul>
-    );
+    // copies the original length over
+    const len = collectedNumber2.length;
+
+    // expands capacity up to 5
+    collectedNumber2.length = 5;
+
+    collectedNumber2.fill(undefined, len, 5);
+
+    if (!name) {
+      return <li>Null</li>;
+    } else {
+      console.log(collectedNumber.length);
+      return <li>Booking</li>;
+    }
   });
 
   //POST A BOOKING FOR A GIVEN DATE
@@ -179,7 +138,6 @@ function App() {
 
   //GET THE NUMBER OF CUSTOMERS ON A
   const getDailyCustomers = () => {
-    console.log(dateOfQuestion);
     Axios.post("http://localhost:3001/customerTotal", {
       dateOfQuestion: dateOfQuestion,
     }).then((response) => {
@@ -196,12 +154,9 @@ function App() {
       `http://localhost:3001/periodCustomerTotal/periodStart=${dateOne}&periodEnd=${dateTwo}`
     ).then((response) => {
       setTimePeriod(response.data);
-      console.log(response.data);
 
-      let totalBookings = 0;
       return (
         <ul>
-          totalBookings += name.bookingPartySize
           {timePeriod.map((item) => {
             return <li>{item.idbookings} </li>;
           })}
@@ -215,20 +170,18 @@ function App() {
   //IF TABLE IS BOOKED GET CUSTOMER SURNAME + NUMBER
   //IF NULL A NULL VALUE CAN BE RETURNED
   const getdailyBookings = () => {
-    console.log(dateOfQuestion2);
     Axios.get(
       `http://localhost:3001/dailyInformation/find=${dateOfQuestion2}`
     ).then((response) => {
       setCollectedNumber2(response.data);
-      console.log(response.data);
 
-      return (
-        <ul>
-          {collectedNumber2.map((item) => {
-            return <li>{item.idbookings}</li>;
-          })}
-        </ul>
-      );
+      // return (
+      //   <ul>
+      //     {collectedNumber2.map((item) => {
+      //       return <li>{item.idbookings}</li>;
+      //     })}
+      //   </ul>
+      // );
     });
   };
 

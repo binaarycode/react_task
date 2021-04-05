@@ -41,20 +41,21 @@ function App() {
     );
   });
 
-  const callList2 = collectedNumber2.map((name) => {
-    // copies the original length over
-    const len = collectedNumber2.length;
+  const paddedCollectedNumber2 = collectedNumber2.concat(
+    Array(5 - collectedNumber2.length).fill(undefined)
+  );
 
-    // expands capacity up to 5
-    collectedNumber2.length = 5;
-
-    collectedNumber2.fill(undefined, len, 5);
-
+  const callList2 = paddedCollectedNumber2.map((name) => {
     if (!name) {
       return <li>Null</li>;
     } else {
       console.log(collectedNumber.length);
-      return <li>Booking</li>;
+      return (
+        <li>
+          Surname : &nbsp;&nbsp; {name.customerSurname} | &nbsp;&nbsp; Number :{" "}
+          {name.customerMobileNumber}
+        </li>
+      );
     }
   });
 

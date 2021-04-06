@@ -42,9 +42,9 @@ function App() {
   const [inputedDateOne, setInputedDateOne] = useState(Date());
   const [inputedDateTwo, setInputedDateTwo] = useState(Date());
 
-  const callList = customersOverATimePeriod.map((name) => {
+  const callList = customersOverATimePeriod.map((name, index) => {
     return (
-      <ul key={"sum(bookingPartySize)"}>
+      <ul key={{ index }}>
         Date of Booking :{" "}
         {moment(name.dateOfBooking).tz("Europe/London").format("LL")}
         &nbsp;&nbsp; | &nbsp;&nbsp;Total Customers:&nbsp;&nbsp;&nbsp;
@@ -59,12 +59,12 @@ function App() {
   );
 
   //inserts null into an array if there is room
-  const callList2 = paddedCollectedNumber2.map((name) => {
+  const callList2 = paddedCollectedNumber2.map((name, index) => {
     if (!name) {
       return <li>Null</li>;
     } else {
       return (
-        <li>
+        <li key={index}>
           Surname : &nbsp;&nbsp; {name.customerSurname} | &nbsp;&nbsp; Number :{" "}
           {name.customerMobileNumber}
         </li>
@@ -203,8 +203,8 @@ function App() {
       setCustomersOverATimePeriod(response.data);
       return (
         <ul>
-          {customersOverATimePeriod.map((item) => {
-            return <li key={item.idbookings}>{item.idbookings} </li>;
+          {customersOverATimePeriod.map((item, index) => {
+            return <li key={index}>{item.idbookings} </li>;
           })}
         </ul>
       );

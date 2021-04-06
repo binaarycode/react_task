@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const mysql = require("mysql");
 const cors = require("cors");
+const e = require("express");
 
 app.use(cors());
 app.use(express.json());
@@ -21,8 +22,19 @@ app.post('/create', (req, res) => {
     const customerMobileNumber = req.body.customerMobileNumber
     const bookingPartySize = req.body.bookingPartySize
     const dateOfBooking = req.body.dateOfBooking 
-
-        //LOOK UP THE DATE OF BOOKING IN THE DATABASE AND RETRIEVE ALL BOOKING IDS 
+   
+    const surnameRegex = /^[a-zA-Z]+$/;
+    
+    if (customerSurname === "" || customerMobileNumber === "" || bookingPartySize === "" || dateOfBooking ===""){
+        return res.send("No null values are allowed");
+    }else if(bookingPartySize < 1 || bookingPartySize > 4){
+        return res.send("Only a max of 4 people per table");
+    } else if (!customerSurname.match(surnameRegex)) {
+        return res.send("Numbers can only be used");
+    }else if(!customerSurname.match(surnameRegex)){
+        return res.send("Surname can only contain letters");
+    }else{
+    //LOOK UP THE DATE OF BOOKING IN THE DATABASE AND RETRIEVE ALL BOOKING IDS 
        db.query("SELECT COUNT(idbookings) AS amount FROM bookings WHERE dateOfBooking = ? ",[dateOfBooking],(err,result) => {
 
             if ( result[0]['amount'] > 4){
@@ -45,10 +57,11 @@ app.post('/create', (req, res) => {
                     }
                 );
 
-                //return conformation of the booking 
+              
             }
         });
-    // IF THIS RUNS TELL THEM THEY GET A BOOKING
+
+    }
 }) 
 
 
@@ -70,17 +83,24 @@ app.put('/updateNumber', (req, res) => {
     const idbookings = req.body.idbookings;
     const customerMobileNumber = req.body.customerMobileNumber;
 
-    db.query(
-        "UPDATE bookings SET  customerMobileNumber = ? WHERE idbookings = ?",
-        [customerMobileNumber,idbookings], 
-        (err, result) =>{
-            if (err){
-                console.log(err);
-            }else{
-                res.send("result");
+    if(customerMobileNumber == ""){
+        res.send("Field can't be empty")
+    }else if(isNaN(newCustomerMobileNumber)) {
+        res.send("Numbers can only be used");
+    }else{
+        db.query(
+            "UPDATE bookings SET  customerMobileNumber = ? WHERE idbookings = ?",
+            [customerMobileNumber,idbookings], 
+            (err, result) =>{
+                if (err){
+                    console.log(err);
+                }else{
+                    res.send("result");
+                }
             }
-        }
-    );
+        );
+    }
+
 });
 
 //UPDATE THE PARTY SIZE
@@ -89,22 +109,22 @@ app.put('/updatePartySize', (req, res) => {
     const idbookings = req.body.idbookings;
     const bookingPartySize = req.body.bookingPartySize;
 
-    console.log(idbookings);
-    console.log(bookingPartySize);
-
-    db.query(
-        "UPDATE bookings SET  bookingPartySize = ? WHERE idbookings = ?",
-        [bookingPartySize,idbookings], 
-        (err, result) =>{
-            if (err){
-               
-                console.log(err);
-            }else{
-                res.send(result);
+    if (newPartySize < 1 || newPartySize > 4) {
+        alert("Need to enter a new party size between 1 and 4");
+      } else {
+        db.query(
+            "UPDATE bookings SET  bookingPartySize = ? WHERE idbookings = ?",
+            [bookingPartySize,idbookings], 
+            (err, result) =>{
+                if (err){
+                    console.log(err);
+                }else{
+                    res.status(400).json({status: 400, message:""});
+                }
             }
-
-        }
-    );
+        );
+      }
+   
 });
 
 //DELETE THE BOOKING
@@ -126,16 +146,15 @@ app.delete('/delete/:idbookings', (req,res) => {
 
 app.post('/customerTotal', (req, res) => {
 
-    const dateOfQuestion = req.body.dateOfQuestion 
-    console.log(dateOfQuestion)
+    const dateOfSearch = req.body.dateOfSearch 
+    console.log(dateOfSearch)
 
     db.query(
-        "SELECT SUM(bookingPartySize) FROM restrauntbooking.bookings where dateOfBooking = ?",[dateOfQuestion],
+        "SELECT SUM(bookingPartySize) FROM restrauntbooking.bookings where dateOfBooking = ?",[dateOfSearch],
         (err, result) =>{
             if(err){
-                console.log(err)
+                res.status(400).json({status: 400, message:""});
             }else{
-                console.log(result);
                 res.send(result);
                 
             }
@@ -148,18 +167,18 @@ app.post('/customerTotal', (req, res) => {
 
 //GET TOTAL NUMBER OF CUSTOMERS FROM TWO DATES
 
-app.get('/periodCustomerTotal/periodStart=:dateOne&periodEnd=:dateTwo', (req,res) =>{
+app.get('/periodCustomerTotal/periodStart=:inputedDateOne&periodEnd=:inputedDateTwo', (req,res) =>{
 
-    const dateOne = req.params.dateOne;
-    const dateTwo = req.params.dateTwo;
+    const inputedDateOne = req.params.inputedDateOne;
+    const inputedDateTwo = req.params.inputedDateTwo;
 
-    console.log(dateOne)
-    console.log(dateTwo)
+    console.log(inputedDateOne)
+    console.log(inputedDateTwo)
     db.query(
-        "SELECT dateOfBooking, sum(bookingPartySize) FROM restrauntbooking.bookings where dateOfBooking between ? and ? GROUP BY dateOfBooking ORDER BY dateOfBooking ASC",[dateOne,dateTwo],
+        "SELECT dateOfBooking, sum(bookingPartySize) FROM restrauntbooking.bookings where dateOfBooking between ? and ? GROUP BY dateOfBooking ORDER BY dateOfBooking ASC",[inputedDateOne,inputedDateTwo],
         (err, result) =>{
             if(err){
-                console.log(err)
+                res.status(400).json({status: 400, message:""});
             }else{
                 console.log(result);
                 res.send(result);
@@ -175,16 +194,16 @@ app.get('/periodCustomerTotal/periodStart=:dateOne&periodEnd=:dateTwo', (req,res
   //INCLUDE TABLE LIST AND BOOKINGS
   //IF TABLE IS BOOKED GET CUSTOMER SURNAME + NUMBER
   //IF NULL A NULL VALUE CAN BE RETURNED
-  app.get("/dailyInformation/find=:dateOfQuestion2", (req,res) =>{
+  app.get("/dailyInformation/find=:bookingListForSpecifiedDay", (req,res) =>{
 
-    const dateOfQuestion2  = req.params.dateOfQuestion2;
-    console.log(dateOfQuestion2)
+    const bookingListForSpecifiedDay  = req.params.bookingListForSpecifiedDay;
+    console.log(bookingListForSpecifiedDay)
    
     db.query(
-        "SELECT * FROM restrauntbooking.bookings where dateOfBooking = ?",[dateOfQuestion2],
+        "SELECT * FROM restrauntbooking.bookings where dateOfBooking = ?",[bookingListForSpecifiedDay],
         (err, result) =>{
             if(err){
-                console.log(err)
+                res.status(400).json({status: 400, message:""});
             }else{
                 console.log(result);
                 res.send(result);
